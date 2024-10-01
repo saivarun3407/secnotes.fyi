@@ -1,0 +1,22 @@
+baseURL = "https://secnotes.fyi/"
+languageCode = "en-us"
+title = "SeCnOtEs.fyi"
+theme = "hugo-ficurinia"
+
+[params]
+  logo = "/logo.svg"
+  description = "A blog about security notes and insights."
+  mainSections = ["posts"]
+
+[menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 1
+  [[menu.main]]
+    identifier = "posts"
+    name = "Blog"
+    url = "/posts/"
+    weight = 2
+
