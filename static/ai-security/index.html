@@ -1,0 +1,3280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI Security — Training & Research</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #121821; --panel2: #18202b; --text: #e8eef6;
+    --muted: #93a1b3; --accent: #5eead4; --accent2: #93c5fd; --line: #243041;
+    --train: #34d399; --res: #60a5fa; --lab: #fbbf24; --practice: #34d399; --paper: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #143042 0%, transparent 55%),
+                radial-gradient(900px 500px at 100% 0%, #1a2740 0%, transparent 50%), var(--bg);
+    color: var(--text); line-height: 1.5;
+  }
+  header { padding: 2.2rem 1.25rem 1rem; max-width: 1100px; margin: 0 auto; }
+  header h1 { margin: 0 0 .35rem; font-size: 1.85rem; letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--muted); max-width: 62ch; }
+  .hint { margin-top: .65rem; color: var(--accent); font-size: .9rem; }
+  .tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1.25rem auto 0; max-width: 1100px; padding: 0 1.25rem; }
+  .tab { appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: .55rem 1rem; cursor: pointer; font-weight: 600; }
+  .tab.active { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .counts { color: var(--muted); font-weight: 500; margin-left: .35rem; }
+  main { max-width: 1100px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+  .panel { display: none; } .panel.active { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .9rem; }
+  .card {
+    background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--line); border-radius: 14px; padding: 1rem;
+    cursor: pointer; user-select: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .card:hover, .card:focus-visible { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); outline: none; }
+  .card.open { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .row { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+  .badges { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+  .badge, .src, .kind { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: .2rem .45rem; border-radius: 6px; }
+  .badge { background: color-mix(in srgb, var(--train) 20%, transparent); color: var(--train); }
+  .src { background: color-mix(in srgb, var(--res) 20%, transparent); color: var(--res); }
+  .kind-lab { background: color-mix(in srgb, var(--lab) 22%, transparent); color: var(--lab); }
+  .kind-practice { background: color-mix(in srgb, var(--practice) 22%, transparent); color: var(--practice); }
+  .kind-paper { background: color-mix(in srgb, var(--paper) 22%, transparent); color: var(--paper); }
+  .meta { display: flex; gap: .45rem; align-items: center; }
+  .date { color: var(--muted); font-size: .8rem; }
+  .chev { color: var(--muted); transition: transform .18s ease; font-size: .95rem; flex-shrink: 0; }
+  .card.open .chev { transform: rotate(180deg); color: var(--accent); }
+  h3 { margin: .55rem 0 .2rem; font-size: 1.05rem; }
+  h4 { margin: 0 0 .45rem; color: var(--accent2); font-size: .95rem; font-weight: 600; }
+  p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .teaser { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card.open .teaser { display: none; }
+  .details { display: none; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+  .card.open .details { display: grid; gap: .7rem; }
+  .details strong { color: var(--accent); font-weight: 600; }
+  .hooks, .practice, .linkrow, .genuine { font-size: .88rem; }
+  a { color: var(--accent2); text-decoration: none; } a:hover { text-decoration: underline; }
+  .search { max-width: 1100px; margin: .85rem auto 0; padding: 0 1.25rem; }
+  .search input { width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); padding: .8rem 1rem; font-size: 1rem; }
+  footer { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 2.5rem; color: var(--muted); font-size: .85rem; }
+  .queued { margin: 0 0 1rem; padding: .75rem 1rem; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: .9rem; }
+  .genuine-intro h2 { margin: 0 0 .5rem; font-size: 1.35rem; }
+  .genuine-intro > p { margin-bottom: 1rem; max-width: 70ch; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+  .legend-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; }
+  .legend-card p { margin-top: .5rem; }
+  .legend-card strong { color: var(--text); }
+  .filter-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.25rem; }
+  .chip { appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: .4rem .85rem; cursor: pointer; font-size: .85rem; font-weight: 600; }
+  .chip.active { border-color: var(--accent); color: var(--accent); }
+  .subhead { margin: 1.5rem 0 .75rem; font-size: 1.05rem; color: var(--text); }
+  .card.hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>AI Security index</h1>
+    <p>Aitr training days + Master research digests. Click any card to expand.</p>
+    <p class="hint">Tip: open the Genuineness tab to see what companies actually ship vs paper-only research.</p>
+  </header>
+  <div class="search"><input id="q" type="search" placeholder="Filter by title, day, paper…" autocomplete="off"/></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="training">Training <span class="counts">17</span></button>
+    <button class="tab" data-tab="research">Research <span class="counts">90</span></button>
+    <button class="tab" data-tab="genuine">Genuineness</button>
+  </div>
+  <main>
+    <section id="training" class="panel active">
+      <div class="queued">Queued next: Day 18 ActGuard · Stochastic Deputy (tenant isolation).</div>
+      <div class="grid"><article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 1</h3>
+    <h4>LLM app trust boundaries</h4>
+    <p class="teaser">Three hostile-by-default lines: user prompt, retrieved/external content, tool-calling output. Isolation is a sandbox property, not a prompt.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Three hostile-by-default lines: user prompt, retrieved/external content, tool-calling output. Isolation is a sandbox property, not a prompt.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>METR OpenAI–HF; EAL-Bench; Missing Boundary; CONTINUITY; Trust Me; Misalignment Reports</p>
+    <p class="practice"><strong>Practice</strong><br/>Sketch trusted vs untrusted for one real AI feature. Include shared caches, logs, scoring APIs — not just the chat box.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 2</h3>
+    <h4>Direct vs indirect prompt injection</h4>
+    <p class="teaser">Direct = typed into chat; indirect = payload in docs/email/web/RAG the model reads.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Direct = typed into chat; indirect = payload in docs/email/web/RAG the model reads.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>Covert IPI; CPE; DriftNet; Rethinking IPI as test-time search</p>
+    <p class="practice"><strong>Practice</strong><br/>Ask: could this URL/email/doc override instructions even if the user never typed them?</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 3</h3>
+    <h4>Tool / agent abuse (confused deputy)</h4>
+    <p class="teaser">Untrusted text steers privileged tool calls; tools inherit harness privileges.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Untrusted text steers privileged tool calls; tools inherit harness privileges.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>CPE; Stochastic Deputy (queued)</p>
+    <p class="practice"><strong>Practice</strong><br/>List an agent’s tools and mark blast radius if a retrieved doc/email could trigger them.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 4</h3>
+    <h4>Capability scoping (least privilege)</h4>
+    <p class="teaser">Default-deny tool allowlists; human confirm for high-impact; separate narrower identities.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Default-deny tool allowlists; human confirm for high-impact; separate narrower identities.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>SkillShift; ACLE-MCP; HookPry; Execution Grant; Muse</p>
+    <p class="practice"><strong>Practice</strong><br/>For yesterday’s tool list: keep / drop / confirm, plus a one-line allowlist.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 5</h3>
+    <h4>Confirmation gates (irreversible-action policy)</h4>
+    <p class="teaser">Reversible can auto-run; irreversible needs hard human yes; model cannot self-approve.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Reversible can auto-run; irreversible needs hard human yes; model cannot self-approve.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>Sentinel-RL; AP2 Whisper; Authority Is Not a String; Verifiable Action Card</p>
+    <p class="practice"><strong>Practice</strong><br/>For each confirm-marked tool: what needs confirm, who confirms, never auto-run.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 6</h3>
+    <h4>Output / exfiltration controls (egress DLP)</h4>
+    <p class="teaser">Control what leaves: replies, tool side-effects, covert channels. Confirm ≠ egress.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Control what leaves: replies, tool side-effects, covert channels. Confirm ≠ egress.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>Anthropic cyber-eval egress; Stealing Reasoning Traces; UMPeek</p>
+    <p class="practice"><strong>Practice</strong><br/>Map every egress path for one agent; write one rule per channel (redact/block/confirm).</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 7</h3>
+    <h4>Detection &amp; monitoring for agent misuse</h4>
+    <p class="teaser">SIEM the harness (tool name/args, trigger source, allow/deny/confirm, egress), not CoT. Tamper-evident logs outside the agent.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>SIEM the harness (tool name/args, trigger source, allow/deny/confirm, egress), not CoT. Tamper-evident logs outside the agent.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>Black Box for Agentic Processes; DriftNet; Astra CoT-monitorability drop</p>
+    <p class="practice"><strong>Practice</strong><br/>Name 5 harness fields you’d log for one agent run that CoT alone would miss.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 8</h3>
+    <h4>Incident response &amp; containment</h4>
+    <p class="teaser">Kill in harness, revoke tools/creds, freeze egress, preserve logs, wipe execution state. Chat stop ≠ contained.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Kill in harness, revoke tools/creds, freeze egress, preserve logs, wipe execution state. Chat stop ≠ contained.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>CONTINUITY; Execution-state unlearning; Anthropic containment playbook</p>
+    <p class="practice"><strong>Practice</strong><br/>Write a 5-step kill checklist for a compromised agent that does not rely on asking the model to stop.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 9</h3>
+    <h4>Red-teaming / evaluating agent defenses</h4>
+    <p class="teaser">Score harness outcomes (allowlist/confirm/egress/kill), not ASR-only.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Score harness outcomes (allowlist/confirm/egress/kill), not ASR-only.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>TIER; PatchBench; Rethinking IPI test-time search</p>
+    <p class="practice"><strong>Practice</strong><br/>Write 3 adversarial cases against your Day 4–8 controls and the harness outcome you’d measure.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 10</h3>
+    <h4>Residual authority (revoked ≠ dead)</h4>
+    <p class="teaser">Tokens, MCP sessions, sticky confirms that outlive chat stop / IR kill.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Tokens, MCP sessions, sticky confirms that outlive chat stop / IR kill.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>Muse credential surrogation; Revoked but Still Authoritative; ResidualAuth</p>
+    <p class="practice"><strong>Practice</strong><br/>List every credential/approval that can persist across turns; mark which survive “stop chat”.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 11</h3>
+    <h4>Agent memory as writable trust boundary</h4>
+    <p class="teaser">Long-term notes/summaries/vector memory persist malicious instructions across turns.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Long-term notes/summaries/vector memory persist malicious instructions across turns.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>MemSentry; EAL-Bench; Persistent Memory Poisoning</p>
+    <p class="practice"><strong>Practice</strong><br/>For one agent with memory: write paths, who can write, detect/wipe on IR.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 12</h3>
+    <h4>RAG document poisoning</h4>
+    <p class="teaser">Own the corpus/index → own every “evidence” chunk retrieved into context.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Own the corpus/index → own every “evidence” chunk retrieved into context.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>In RAG We Trust?; ToxicRAG; CodePoisonRAG; Rent-a-RAG</p>
+    <p class="practice"><strong>Practice</strong><br/>Map who can write to the corpus/index, how chunks land in context, one integrity check.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 13</h3>
+    <h4>Skills/plugins as supply-chain TCB</h4>
+    <p class="teaser">Skills/plugins/MCP/hooks widen capabilities outside the chat string.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Skills/plugins/MCP/hooks widen capabilities outside the chat string.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>SkillShift; HookPry; No-Box MCP IPI; SkillSecurer</p>
+    <p class="practice"><strong>Practice</strong><br/>List every skill/plugin/MCP, who can add/update it, and which can run on install/lifecycle.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 14</h3>
+    <h4>Multimodal / non-text injection</h4>
+    <p class="teaser">Screenshots, images, UI pixels, speech as untrusted input that can steer tools.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Screenshots, images, UI pixels, speech as untrusted input that can steer tools.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>AgentHijack; Multimodal PI; DuplexJail; Repeat-After-Me; ViTeGate</p>
+    <p class="practice"><strong>Practice</strong><br/>List every non-text input path; mark which can trigger tools without a typed jailbreak.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 15</h3>
+    <h4>Agent-to-agent (A2A) trust boundaries</h4>
+    <p class="teaser">Peer agent messages are untrusted input; auth to talk ≠ auth to spend receiver’s tools.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Peer agent messages are untrusted input; auth to talk ≠ auth to spend receiver’s tools.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>A2ABreak; Anthropic Threat Intel; Misleading the Planner; MCP implicit trust</p>
+    <p class="practice"><strong>Practice</strong><br/>Map who can call whom, what tools/creds each peer inherits, one authz check at the receiver.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 16</h3>
+    <h4>Model / training supply-chain integrity</h4>
+    <p class="teaser">Pin/verify weights, fine-tunes, adapters, training data before run. Auth to download ≠ integrity.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Pin/verify weights, fine-tunes, adapters, training data before run. Auth to download ≠ integrity.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>PROSE; Anthropic Threat Intel AI supply-chain</p>
+    <p class="practice"><strong>Practice</strong><br/>For one model stack: list artifacts you must pin/hash and who can swap them.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="badge">Aitr</span><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Day 17</h3>
+    <h4>Membership inference / RAG privacy leakage</h4>
+    <p class="teaser">Answers can leak whether a private doc was in corpus/context without a tool call.</p>
+  </div>
+  <div class="details">
+    <p><strong>Why it matters</strong><br/>Answers can leak whether a private doc was in corpus/context without a tool call.</p>
+    <p class="hooks"><strong>Paper hooks</strong><br/>CIG-MIA</p>
+    <p class="practice"><strong>Practice</strong><br/>Name one RAG or agent memory answer that could reveal membership; how you’d test it.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Maps to controls companies actually run (allowlists, HITL, egress, IR). Paper hooks are the research edge — not proof Company X shipped that named paper.</p>
+  </div>
+</article></div>
+    </section>
+    <section id="research" class="panel">
+      <div class="grid"><article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>METR — OpenAI / Hugging Face investigation</h3>
+    <p class="teaser">Shared Artifactory as agent mailbox; multi-agent collusion.</p>
+  </div>
+  <div class="details">
+    <p>Shared Artifactory as agent mailbox; multi-agent collusion.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Independent investigation of a real frontier-lab eval incident. Controls and failures described are from production systems.</p>
+    <p class="linkrow"><a href="https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI — Hugging Face incident &amp; road ahead</h3>
+    <p class="teaser">Eval containment failure at frontier scale.</p>
+  </div>
+  <div class="details">
+    <p>Eval containment failure at frontier scale.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI’s own postmortem / roadmap after the HF eval incident.</p>
+    <p class="linkrow"><a href="https://openai.com/index/hugging-face-incident-and-the-road-ahead/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Cybersecurity eval incidents</h3>
+    <p class="teaser">Eval egress / Irregular misconfig → real orgs.</p>
+  </div>
+  <div class="details">
+    <p>Eval egress / Irregular misconfig → real orgs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic research on real cyber-eval mishaps and egress failures.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/investigating-incidents-cybersecurity-evals" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SecOPD — adaptive prompt-injection defense</h3>
+    <p class="teaser">Token-level distillation; PISmith ASR 9% vs Meta-SecAlign 94%.</p>
+  </div>
+  <div class="details">
+    <p>Token-level distillation; PISmith ASR 9% vs Meta-SecAlign 94%.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Defense method evaluated in research; not a named shipped product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.21500" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Stealing Reasoning Traces</h3>
+    <p class="teaser">Encrypted CoT portable across sessions/models.</p>
+  </div>
+  <div class="details">
+    <p>Encrypted CoT portable across sessions/models.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Attack paper on CoT / reasoning-trace leakage.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.09867" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Improving alignment &amp; security practices</h3>
+    <p class="teaser">Post-incident containment playbook.</p>
+  </div>
+  <div class="details">
+    <p>Post-incident containment playbook.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic describes practices they say they run after incidents.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/news/improving-alignment-security-efforts" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Training a Misaligned Reward Seeker</h3>
+    <p class="teaser">Hacker-Opus: looks aligned on audits, then escapes.</p>
+  </div>
+  <div class="details">
+    <p>Hacker-Opus: looks aligned on audits, then escapes.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic alignment research on a trained misaligned model; lab study, not a customer feature.</p>
+    <p class="linkrow"><a href="https://alignment.anthropic.com/2026/reward-seeker/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Covert Indirect Prompt Injection</h3>
+    <p class="teaser">Injected tool actions hidden behind return-to-user-task.</p>
+  </div>
+  <div class="details">
+    <p>Injected tool actions hidden behind return-to-user-task.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Attack research on stealthy IPI via tool actions.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.30362" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Context Privilege Escalation (CPE)</h3>
+    <p class="teaser">Harness bugs → RCE via context assembly.</p>
+  </div>
+  <div class="details">
+    <p>Harness bugs → RCE via context assembly.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Harness vulnerability class; research finding, not a company product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01222" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Defense-as-Skill</h3>
+    <p class="teaser">Runtime guard skill vs malicious agent skills.</p>
+  </div>
+  <div class="details">
+    <p>Runtime guard skill vs malicious agent skills.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed defense pattern for skill ecosystems.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01487" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AKRASIA</h3>
+    <p class="teaser">Stealthy inference-time reasoning backdoor on code LLMs.</p>
+  </div>
+  <div class="details">
+    <p>Stealthy inference-time reasoning backdoor on code LLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Backdoor attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01023" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>When Safety Routing Breaks</h3>
+    <p class="teaser">Refusal collapse after tiny benign fine-tunes.</p>
+  </div>
+  <div class="details">
+    <p>Refusal collapse after tiny benign fine-tunes.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety-routing failure study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01455" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MI on diffusion LMs</h3>
+    <p class="teaser">Token-level memorization / PII angle.</p>
+  </div>
+  <div class="details">
+    <p>Token-level memorization / PII angle.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Membership-inference / memorization research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.00873" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CodePoisonRAG</h3>
+    <p class="teaser">One poisoned RAG artifact injects chosen CWEs.</p>
+  </div>
+  <div class="details">
+    <p>One poisoned RAG artifact injects chosen CWEs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning attack for code generation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02774" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SkillShift</h3>
+    <p class="teaser">Third-party skills steer policy while task still succeeds.</p>
+  </div>
+  <div class="details">
+    <p>Third-party skills steer policy while task still succeeds.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Skill supply-chain attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02564" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>EAL-Bench</h3>
+    <p class="teaser">Agent memory as fake authority.</p>
+  </div>
+  <div class="details">
+    <p>Agent memory as fake authority.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Benchmark / attack surface for agent memory.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01836" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Context Inference Attacks Without Jailbreaks</h3>
+    <p class="teaser">Infer hidden/retrieved context from benign queries.</p>
+  </div>
+  <div class="details">
+    <p>Infer hidden/retrieved context from benign queries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Privacy attack via benign queries.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01663" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ACLE-MCP</h3>
+    <p class="teaser">OAuth ≠ current MCP workload.</p>
+  </div>
+  <div class="details">
+    <p>OAuth ≠ current MCP workload.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Auth analysis of MCP; relevant to industry MCP rollouts but not a shipped product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02690" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Linguistic Illegibility (Mickens)</h3>
+    <p class="teaser">CoT probes can diverge from real computation.</p>
+  </div>
+  <div class="details">
+    <p>CoT probes can diverge from real computation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Interpretability / CoT reliability research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02852" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>HookPry</h3>
+    <p class="teaser">Plugin lifecycle hooks as supply-chain outside LLM path.</p>
+  </div>
+  <div class="details">
+    <p>Plugin lifecycle hooks as supply-chain outside LLM path.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Plugin/hook supply-chain attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03884" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PatchBench</h3>
+    <p class="teaser">PoC-only scoring inflates patching agents ~1.83×.</p>
+  </div>
+  <div class="details">
+    <p>PoC-only scoring inflates patching agents ~1.83×.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Eval methodology paper for patching agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04075" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Sentinel-RL</h3>
+    <p class="teaser">Hard human gate for SOC containment.</p>
+  </div>
+  <div class="details">
+    <p>Hard human gate for SOC containment.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>HITL gate research; similar gates exist in industry under other names.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04159" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AlcaTRAz</h3>
+    <p class="teaser">Prompt-level jailbreak defense; still a high-severity tail.</p>
+  </div>
+  <div class="details">
+    <p>Prompt-level jailbreak defense; still a high-severity tail.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Jailbreak defense evaluation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03693" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI Daybreak for Frontline Defenders</h3>
+    <p class="teaser">$1B subsidized cyber access for critical infra.</p>
+  </div>
+  <div class="details">
+    <p>$1B subsidized cyber access for critical infra.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Real OpenAI program for critical-infrastructure defenders.</p>
+    <p class="linkrow"><a href="https://openai.com/index/daybreak-for-frontline-defenders/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI — GPT-6 Astra safety</h3>
+    <p class="teaser">Critical cyber model; CoT monitorability drops under pressure.</p>
+  </div>
+  <div class="details">
+    <p>Critical cyber model; CoT monitorability drops under pressure.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI product safety overview for a named model class.</p>
+    <p class="linkrow"><a href="https://openai.com/index/safety-overview-gpt-6-astra/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Trust Me, I&#x27;m Your Developer</h3>
+    <p class="teaser">Model invents identity quiz then self-verifies.</p>
+  </div>
+  <div class="details">
+    <p>Model invents identity quiz then self-verifies.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Social-engineering / self-verification failure research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03247" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>UMPeek</h3>
+    <p class="teaser">Infer hidden user prefs from personalized agents.</p>
+  </div>
+  <div class="details">
+    <p>Infer hidden user prefs from personalized agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Privacy leakage attack on personalized agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03815" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Black Box for Agentic Processes</h3>
+    <p class="teaser">Blockchain-anchored agent audit evidence.</p>
+  </div>
+  <div class="details">
+    <p>Blockchain-anchored agent audit evidence.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed audit-logging architecture.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04017" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>FGLGuard</h3>
+    <p class="teaser">Federated graph guard for multi-agent systems.</p>
+  </div>
+  <div class="details">
+    <p>Federated graph guard for multi-agent systems.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed multi-agent guard.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02967" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Rent-a-RAG / DirBucket</h3>
+    <p class="teaser">Embedding watermarks to audit third-party RAG.</p>
+  </div>
+  <div class="details">
+    <p>Embedding watermarks to audit third-party RAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG audit / watermark research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03749" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>GEO Defender</h3>
+    <p class="teaser">Stops docs gaming generative-search citations.</p>
+  </div>
+  <div class="details">
+    <p>Stops docs gaming generative-search citations.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Generative-engine optimization defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02964" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PROSE</h3>
+    <p class="teaser">Semantic LLM provenance fingerprints.</p>
+  </div>
+  <div class="details">
+    <p>Semantic LLM provenance fingerprints.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Model provenance fingerprint research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02553" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PrimSynth</h3>
+    <p class="teaser">Multi-agent Linux kernel exploit-primitive synthesis.</p>
+  </div>
+  <div class="details">
+    <p>Multi-agent Linux kernel exploit-primitive synthesis.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Offensive multi-agent research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02647" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CONTINUITY</h3>
+    <p class="teaser">Security-context contracts across component boundaries.</p>
+  </div>
+  <div class="details">
+    <p>Security-context contracts across component boundaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed security-context contracts.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.05269" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Rethinking IPI as test-time search</h3>
+    <p class="teaser">More attacker compute finds more injection wins.</p>
+  </div>
+  <div class="details">
+    <p>More attacker compute finds more injection wins.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>IPI evaluation / attacker-compute research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04495" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Repeat-After-Me</h3>
+    <p class="teaser">Black-box adaptive visual prompt injection.</p>
+  </div>
+  <div class="details">
+    <p>Black-box adaptive visual prompt injection.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Visual prompt-injection attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04533" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Execution-state unlearning</h3>
+    <p class="teaser">Delete memory ≠ clear KV/plans/summaries.</p>
+  </div>
+  <div class="details">
+    <p>Delete memory ≠ clear KV/plans/summaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>State-wipe / unlearning research for agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04875" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>TIER</h3>
+    <p class="teaser">Safety beyond binary ASR by threat implicitness.</p>
+  </div>
+  <div class="details">
+    <p>Safety beyond binary ASR by threat implicitness.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety evaluation methodology.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.05117" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Meta Muse security architecture</h3>
+    <p class="teaser">Assume PI; Sentinel; credential surrogation; bounty.</p>
+  </div>
+  <div class="details">
+    <p>Assume PI; Sentinel; credential surrogation; bounty.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Meta’s published security architecture for Muse — describes controls they say they run.</p>
+    <p class="linkrow"><a href="https://research.meta.ai/blog/security-and-safety-for-ai-agents-our-approach-with-muse" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Authority Is Not a String</h3>
+    <p class="teaser">Capabilities as real authority, not prompt text.</p>
+  </div>
+  <div class="details">
+    <p>Capabilities as real authority, not prompt text.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Capability / authority model research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08371" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MemSentry</h3>
+    <p class="teaser">Detect persistent memory poisoning.</p>
+  </div>
+  <div class="details">
+    <p>Detect persistent memory poisoning.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Memory-poisoning detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08747" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Revoked but Still Authoritative</h3>
+    <p class="teaser">Revoked grants still act as authority in agent memory.</p>
+  </div>
+  <div class="details">
+    <p>Revoked grants still act as authority in agent memory.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Residual-authority research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08258" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ResidualAuth</h3>
+    <p class="teaser">Auth state under revocable delegation.</p>
+  </div>
+  <div class="details">
+    <p>Auth state under revocable delegation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Delegation / auth-state research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08062" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Structural Jailbreaks / IICL</h3>
+    <p class="teaser">Cross-provider jailbreaks generalize but don’t compound.</p>
+  </div>
+  <div class="details">
+    <p>Cross-provider jailbreaks generalize but don’t compound.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Jailbreak generalization study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08373" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PrivEscalate</h3>
+    <p class="teaser">531 Docker Linux priv-esc scenarios for LLM agents.</p>
+  </div>
+  <div class="details">
+    <p>531 Docker Linux priv-esc scenarios for LLM agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Agent privilege-escalation benchmark.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09087" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Alignment assessment of cyber-eval incidents</h3>
+    <p class="teaser">Biased reasoning + recklessness; Mythos 5 PyPI malware.</p>
+  </div>
+  <div class="details">
+    <p>Biased reasoning + recklessness; Mythos 5 PyPI malware.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic alignment assessment of their own cyber-eval incidents.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/alignment-assessment-cybersecurity-incidents" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AgentHijack</h3>
+    <p class="teaser">Visual patches on computer-use agents.</p>
+  </div>
+  <div class="details">
+    <p>Visual patches on computer-use agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Computer-use visual attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09212" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>In RAG We Trust?</h3>
+    <p class="teaser">How little poisoned retrieval text flips grounded models.</p>
+  </div>
+  <div class="details">
+    <p>How little poisoned retrieval text flips grounded models.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning sensitivity study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09243" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Multimodal PI on agentic frameworks</h3>
+    <p class="teaser">Image-borne injections to files/mail/tools.</p>
+  </div>
+  <div class="details">
+    <p>Image-borne injections to files/mail/tools.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multimodal injection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09404" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>DuplexJail</h3>
+    <p class="teaser">Spoken interruptions break full-duplex speech safety.</p>
+  </div>
+  <div class="details">
+    <p>Spoken interruptions break full-duplex speech safety.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Speech-agent jailbreak research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09420" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Fragile safety at frontier scale</h3>
+    <p class="teaser">Single refusal-direction ablation on 320B MoE.</p>
+  </div>
+  <div class="details">
+    <p>Single refusal-direction ablation on 320B MoE.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety fragility study at large scale.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09793" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CS-Guard</h3>
+    <p class="teaser">Guardrail bench for code-gen security.</p>
+  </div>
+  <div class="details">
+    <p>Guardrail bench for code-gen security.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Code-gen guardrail benchmark.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09798" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>TrajMark</h3>
+    <p class="teaser">Watermark coding-agent trajectories.</p>
+  </div>
+  <div class="details">
+    <p>Watermark coding-agent trajectories.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Trajectory watermarking research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10416" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Threat Intelligence Sep 2026</h3>
+    <p class="teaser">Agentic kill-chain misuse, API-key theft, influence ops.</p>
+  </div>
+  <div class="details">
+    <p>Agentic kill-chain misuse, API-key theft, influence ops.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic’s threat-intel report on real-world misuse patterns.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/threat-intelligence-report-september-2026" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Frontier Red Team — targeting + GNC</h3>
+    <p class="teaser">Photo geolocation / simulated drone guidance evals.</p>
+  </div>
+  <div class="details">
+    <p>Photo geolocation / simulated drone guidance evals.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic red-team capability evals (lab research, not a customer product).</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/intelligence-targeting-conventional-weapons-capabilities" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>DriftNet</h3>
+    <p class="teaser">Localize IPI in agent tool-call logs.</p>
+  </div>
+  <div class="details">
+    <p>Localize IPI in agent tool-call logs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Detection research for IPI in tool logs.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10892" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>A2ABreak</h3>
+    <p class="teaser">Agent2Agent protocol auth/discovery/delegation.</p>
+  </div>
+  <div class="details">
+    <p>Agent2Agent protocol auth/discovery/delegation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>A2A protocol security analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10871" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SpecGuard</h3>
+    <p class="teaser">Inference-time backdoor detection for third-party LLMs.</p>
+  </div>
+  <div class="details">
+    <p>Inference-time backdoor detection for third-party LLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Backdoor detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11799" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>In-context multimodal jailbreaks</h3>
+    <p class="teaser">Why harmful ICL demos jailbreak MLLMs.</p>
+  </div>
+  <div class="details">
+    <p>Why harmful ICL demos jailbreak MLLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multimodal ICL jailbreak research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10613" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Black-box MI via word-level probs</h3>
+    <p class="teaser">Membership inference without token logits.</p>
+  </div>
+  <div class="details">
+    <p>Membership inference without token logits.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Membership-inference method research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10611" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Jailbreaking evaluators</h3>
+    <p class="teaser">Automated ASR judges disagree.</p>
+  </div>
+  <div class="details">
+    <p>Automated ASR judges disagree.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Eval-judge reliability research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10594" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>The Missing Boundary</h3>
+    <p class="teaser">Degraded control → 55–62% loss-of-control; restore → 0%.</p>
+  </div>
+  <div class="details">
+    <p>Degraded control → 55–62% loss-of-control; restore → 0%.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Control / loss-of-control empirical study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11024" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>From Intent to Execution Grant</h3>
+    <p class="teaser">Bind high-risk actions at the execution sink.</p>
+  </div>
+  <div class="details">
+    <p>Bind high-risk actions at the execution sink.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Execution-binding proposal; mirrors industry least-privilege patterns.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11596" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Whisper Attacks on AP2</h3>
+    <p class="teaser">Signed transaction, unsigned decision steered by product text.</p>
+  </div>
+  <div class="details">
+    <p>Signed transaction, unsigned decision steered by product text.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Payment-protocol / agent commerce attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11757" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ToxicRAG</h3>
+    <p class="teaser">One poisoned knowledge-update doc flips RAG answers.</p>
+  </div>
+  <div class="details">
+    <p>One poisoned knowledge-update doc flips RAG answers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11082" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>No-Box MCP IPI</h3>
+    <p class="teaser">Description-only detection of IPI in MCP servers.</p>
+  </div>
+  <div class="details">
+    <p>Description-only detection of IPI in MCP servers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP IPI detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10854" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Misleading the Planner</h3>
+    <p class="teaser">Poisoned worker descriptions steer the planner.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned worker descriptions steer the planner.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multi-agent planner injection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.15516" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ActGuard</h3>
+    <p class="teaser">Pre-execution IPI audit of tool calls.</p>
+  </div>
+  <div class="details">
+    <p>Pre-execution IPI audit of tool calls.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Pre-execution audit proposal.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14987" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>The Stochastic Deputy</h3>
+    <p class="teaser">Tenant IDs in MCP/tool args as confused-deputy.</p>
+  </div>
+  <div class="details">
+    <p>Tenant IDs in MCP/tool args as confused-deputy.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Tenant isolation / confused-deputy research for tools/MCP.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14780" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CIG-MIA</h3>
+    <p class="teaser">Strong RAG membership inference.</p>
+  </div>
+  <div class="details">
+    <p>Strong RAG membership inference.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG membership-inference attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14649" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SkillSecurer</h3>
+    <p class="teaser">PI scan/patch for agent skill packages.</p>
+  </div>
+  <div class="details">
+    <p>PI scan/patch for agent skill packages.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Skill-package scanning proposal.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14079" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Persistent Memory Poisoning (PMPA)</h3>
+    <p class="teaser">Malicious harness memory across sessions.</p>
+  </div>
+  <div class="details">
+    <p>Malicious harness memory across sessions.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Memory-poisoning attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.13889" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ViTeGate</h3>
+    <p class="teaser">Poisoned image–text pairs in VLRAG.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned image–text pairs in VLRAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Vision-language RAG poisoning research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14685" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Universal Defenses for tool agents</h3>
+    <p class="teaser">Tool filtering + original-toolset recall vs DPI/IPI/memory/backdoors.</p>
+  </div>
+  <div class="details">
+    <p>Tool filtering + original-toolset recall vs DPI/IPI/memory/backdoors.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Defense bundle evaluated in research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16098" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Permutation stegomalware in LLM weights</h3>
+    <p class="teaser">Malware via permutation symmetry in weights.</p>
+  </div>
+  <div class="details">
+    <p>Malware via permutation symmetry in weights.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Weight-stego malware research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16193" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MarkSec</h3>
+    <p class="teaser">Watermark steal/scrub/spoof evaluation.</p>
+  </div>
+  <div class="details">
+    <p>Watermark steal/scrub/spoof evaluation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Watermark robustness evaluation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16681" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Secure AI pentest agents</h3>
+    <p class="teaser">Threat model + guardrails for offensive agents.</p>
+  </div>
+  <div class="details">
+    <p>Threat model + guardrails for offensive agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Pentest-agent threat model research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16694" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>UI desynchronization in mobile agents</h3>
+    <p class="teaser">User and agent can see different UI.</p>
+  </div>
+  <div class="details">
+    <p>User and agent can see different UI.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Mobile agent UI-desync attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16732" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>InceptionRAG</h3>
+    <p class="teaser">Multi-doc stealthy RAG poisoning.</p>
+  </div>
+  <div class="details">
+    <p>Multi-doc stealthy RAG poisoning.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Stealthy multi-doc RAG poisoning.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16818" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>RAG-CT</h3>
+    <p class="teaser">Blunt retrieval-based PII extraction from RAG.</p>
+  </div>
+  <div class="details">
+    <p>Blunt retrieval-based PII extraction from RAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG PII-extraction / defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16095" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI Misalignment Reports hub</h3>
+    <p class="teaser">Six cases: Artifactory messaging, self-generated PI, leaked keys…</p>
+  </div>
+  <div class="details">
+    <p>Six cases: Artifactory messaging, self-generated PI, leaked keys…</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI publishes real misalignment case reports from their systems.</p>
+    <p class="linkrow"><a href="https://alignment.openai.com/misalignment-reports/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Claude Fable / Mythos 5.1</h3>
+    <p class="teaser">Strongest claimed agentic PI robustness; anti-distillation.</p>
+  </div>
+  <div class="details">
+    <p>Strongest claimed agentic PI robustness; anti-distillation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic product claims for named model releases and safeguards.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/claude-fable-and-mythos-5-1" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AgentLSD</h3>
+    <p class="teaser">Security agents under adversarial task contamination.</p>
+  </div>
+  <div class="details">
+    <p>Security agents under adversarial task contamination.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Security-agent contamination research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19140" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Implicit trust in tool-calling / MCP</h3>
+    <p class="teaser">One shared context; no privilege separation.</p>
+  </div>
+  <div class="details">
+    <p>One shared context; no privilege separation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP / tool-calling trust analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18217" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Trusting Trust revisited</h3>
+    <p class="teaser">Poisoned benchmarks contaminate coding agents.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned benchmarks contaminate coding agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Benchmark poisoning for coding agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.17817" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Remote MCP observability</h3>
+    <p class="teaser">Streamable-HTTP MCP as enterprise attack surface.</p>
+  </div>
+  <div class="details">
+    <p>Streamable-HTTP MCP as enterprise attack surface.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Enterprise MCP attack-surface analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19100" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MCP NIDS evasion</h3>
+    <p class="teaser">JSON-RPC can look like beacons to NIDS.</p>
+  </div>
+  <div class="details">
+    <p>JSON-RPC can look like beacons to NIDS.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP / NIDS interaction research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19091" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Illusion of Local Privacy</h3>
+    <p class="teaser">Local LLM serving still leaks prompts at software boundaries.</p>
+  </div>
+  <div class="details">
+    <p>Local LLM serving still leaks prompts at software boundaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Local-serving privacy leakage research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18526" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CaMeLoT</h3>
+    <p class="teaser">Temporal-logic checks on multi-step tool-agent plans.</p>
+  </div>
+  <div class="details">
+    <p>Temporal-logic checks on multi-step tool-agent plans.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Plan-checking defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18674" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Verifiable Action Card</h3>
+    <p class="teaser">Unspoofable HITL for agentic browsers.</p>
+  </div>
+  <div class="details">
+    <p>Unspoofable HITL for agentic browsers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>HITL verification proposal for browser agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18411" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article></div>
+    </section>
+    <section id="genuine" class="panel">
+      <div class="genuine-intro">
+  <h2>How genuine is this research?</h2>
+  <p>The index mixes three kinds of evidence. Use the chips below to filter, then expand any card.</p>
+  <div class="legend">
+    <div class="legend-card">
+      <span class="kind kind-lab">Lab / Incident</span>
+      <p><strong>13 items</strong> from OpenAI, Anthropic, Meta, METR — real postmortems, product safety posts, threat intel, or architecture they say they run.</p>
+    </div>
+    <div class="legend-card">
+      <span class="kind kind-practice">Industry practice</span>
+      <p><strong>8 patterns</strong> that serious agent products ship under different names (allowlists, HITL, egress, kill/revoke). Training days map here.</p>
+    </div>
+    <div class="legend-card">
+      <span class="kind kind-paper">Paper only</span>
+      <p><strong>77 papers</strong> — genuine research on real failure modes. Not proof that Company X shipped that named system.</p>
+    </div>
+  </div>
+  <div class="filter-row" id="kind-filters">
+    <button class="chip active" data-kind="all">All</button>
+    <button class="chip" data-kind="lab">Lab / Incident (13)</button>
+    <button class="chip" data-kind="practice">Industry practice (8)</button>
+    <button class="chip" data-kind="paper">Paper only (77)</button>
+  </div>
+  <h3 class="subhead">Industry practices (what companies actually implement)</h3>
+  <div class="grid practice-grid"><article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Tool allowlists / least privilege</h3>
+    <p class="teaser">Default-deny tools; narrow identities per agent.</p>
+  </div>
+  <div class="details">
+    <p>Default-deny tools; narrow identities per agent.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Shipped in most serious agent products (OpenAI, Anthropic, Meta Muse-style, enterprise copilots). Exact names differ.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Human confirmation for irreversible actions</h3>
+    <p class="teaser">Sends, payments, deletes, privilege changes need a hard human yes.</p>
+  </div>
+  <div class="details">
+    <p>Sends, payments, deletes, privilege changes need a hard human yes.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Common production pattern; Meta Muse Sentinel-style gates and similar HITL in copilots.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Prompt-injection hardening</h3>
+    <p class="teaser">Treat user + retrieved content as untrusted; classifiers / instruction hierarchy.</p>
+  </div>
+  <div class="details">
+    <p>Treat user + retrieved content as untrusted; classifiers / instruction hierarchy.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Universal industry practice; strength varies widely by vendor.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Egress / exfiltration limits</h3>
+    <p class="teaser">Block or review what leaves: files, network, tool side-effects.</p>
+  </div>
+  <div class="details">
+    <p>Block or review what leaves: files, network, tool side-effects.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Labs explicitly discuss this after cyber-eval incidents; enterprises add DLP around agents.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Harness logging &amp; monitoring</h3>
+    <p class="teaser">Log tool name/args, allow/deny/confirm, source of trigger — not just chat text.</p>
+  </div>
+  <div class="details">
+    <p>Log tool name/args, allow/deny/confirm, source of trigger — not just chat text.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Standard for production agent platforms; SIEM integration varies.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Incident kill / revoke</h3>
+    <p class="teaser">Stop in the harness, revoke tokens/tools, freeze egress; chat stop alone is not enough.</p>
+  </div>
+  <div class="details">
+    <p>Stop in the harness, revoke tokens/tools, freeze egress; chat stop alone is not enough.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Described in Anthropic post-incident practices and OpenAI / METR incident writeups.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Plugin / MCP / skill supply-chain checks</h3>
+    <p class="teaser">Who can add tools, what runs on install, pin versions.</p>
+  </div>
+  <div class="details">
+    <p>Who can add tools, what runs on install, pin versions.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Growing industry practice as MCP and skill stores spread; still immature.</p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="practice">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><span class="kind kind-practice">Industry practice</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Red teaming / eval containment</h3>
+    <p class="teaser">Adversarial testing plus sandboxing so eval agents cannot hit real orgs.</p>
+  </div>
+  <div class="details">
+    <p>Adversarial testing plus sandboxing so eval agents cannot hit real orgs.</p>
+    <p class="genuine"><strong>Where you see it</strong><br/>Required by frontier labs; METR / OpenAI / Anthropic incidents show when it fails.</p>
+  </div>
+</article></div>
+  <h3 class="subhead">Tagged research (same cards as Research tab)</h3>
+  <div class="grid research-tagged"><article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>METR — OpenAI / Hugging Face investigation</h3>
+    <p class="teaser">Shared Artifactory as agent mailbox; multi-agent collusion.</p>
+  </div>
+  <div class="details">
+    <p>Shared Artifactory as agent mailbox; multi-agent collusion.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Independent investigation of a real frontier-lab eval incident. Controls and failures described are from production systems.</p>
+    <p class="linkrow"><a href="https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI — Hugging Face incident &amp; road ahead</h3>
+    <p class="teaser">Eval containment failure at frontier scale.</p>
+  </div>
+  <div class="details">
+    <p>Eval containment failure at frontier scale.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI’s own postmortem / roadmap after the HF eval incident.</p>
+    <p class="linkrow"><a href="https://openai.com/index/hugging-face-incident-and-the-road-ahead/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Cybersecurity eval incidents</h3>
+    <p class="teaser">Eval egress / Irregular misconfig → real orgs.</p>
+  </div>
+  <div class="details">
+    <p>Eval egress / Irregular misconfig → real orgs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic research on real cyber-eval mishaps and egress failures.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/investigating-incidents-cybersecurity-evals" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SecOPD — adaptive prompt-injection defense</h3>
+    <p class="teaser">Token-level distillation; PISmith ASR 9% vs Meta-SecAlign 94%.</p>
+  </div>
+  <div class="details">
+    <p>Token-level distillation; PISmith ASR 9% vs Meta-SecAlign 94%.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Defense method evaluated in research; not a named shipped product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.21500" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-01</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Stealing Reasoning Traces</h3>
+    <p class="teaser">Encrypted CoT portable across sessions/models.</p>
+  </div>
+  <div class="details">
+    <p>Encrypted CoT portable across sessions/models.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Attack paper on CoT / reasoning-trace leakage.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.09867" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Improving alignment &amp; security practices</h3>
+    <p class="teaser">Post-incident containment playbook.</p>
+  </div>
+  <div class="details">
+    <p>Post-incident containment playbook.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic describes practices they say they run after incidents.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/news/improving-alignment-security-efforts" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Training a Misaligned Reward Seeker</h3>
+    <p class="teaser">Hacker-Opus: looks aligned on audits, then escapes.</p>
+  </div>
+  <div class="details">
+    <p>Hacker-Opus: looks aligned on audits, then escapes.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic alignment research on a trained misaligned model; lab study, not a customer feature.</p>
+    <p class="linkrow"><a href="https://alignment.anthropic.com/2026/reward-seeker/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Covert Indirect Prompt Injection</h3>
+    <p class="teaser">Injected tool actions hidden behind return-to-user-task.</p>
+  </div>
+  <div class="details">
+    <p>Injected tool actions hidden behind return-to-user-task.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Attack research on stealthy IPI via tool actions.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2608.30362" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Context Privilege Escalation (CPE)</h3>
+    <p class="teaser">Harness bugs → RCE via context assembly.</p>
+  </div>
+  <div class="details">
+    <p>Harness bugs → RCE via context assembly.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Harness vulnerability class; research finding, not a company product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01222" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Defense-as-Skill</h3>
+    <p class="teaser">Runtime guard skill vs malicious agent skills.</p>
+  </div>
+  <div class="details">
+    <p>Runtime guard skill vs malicious agent skills.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed defense pattern for skill ecosystems.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01487" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AKRASIA</h3>
+    <p class="teaser">Stealthy inference-time reasoning backdoor on code LLMs.</p>
+  </div>
+  <div class="details">
+    <p>Stealthy inference-time reasoning backdoor on code LLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Backdoor attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01023" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>When Safety Routing Breaks</h3>
+    <p class="teaser">Refusal collapse after tiny benign fine-tunes.</p>
+  </div>
+  <div class="details">
+    <p>Refusal collapse after tiny benign fine-tunes.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety-routing failure study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01455" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-02</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MI on diffusion LMs</h3>
+    <p class="teaser">Token-level memorization / PII angle.</p>
+  </div>
+  <div class="details">
+    <p>Token-level memorization / PII angle.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Membership-inference / memorization research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.00873" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CodePoisonRAG</h3>
+    <p class="teaser">One poisoned RAG artifact injects chosen CWEs.</p>
+  </div>
+  <div class="details">
+    <p>One poisoned RAG artifact injects chosen CWEs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning attack for code generation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02774" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SkillShift</h3>
+    <p class="teaser">Third-party skills steer policy while task still succeeds.</p>
+  </div>
+  <div class="details">
+    <p>Third-party skills steer policy while task still succeeds.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Skill supply-chain attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02564" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>EAL-Bench</h3>
+    <p class="teaser">Agent memory as fake authority.</p>
+  </div>
+  <div class="details">
+    <p>Agent memory as fake authority.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Benchmark / attack surface for agent memory.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01836" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Context Inference Attacks Without Jailbreaks</h3>
+    <p class="teaser">Infer hidden/retrieved context from benign queries.</p>
+  </div>
+  <div class="details">
+    <p>Infer hidden/retrieved context from benign queries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Privacy attack via benign queries.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.01663" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ACLE-MCP</h3>
+    <p class="teaser">OAuth ≠ current MCP workload.</p>
+  </div>
+  <div class="details">
+    <p>OAuth ≠ current MCP workload.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Auth analysis of MCP; relevant to industry MCP rollouts but not a shipped product.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02690" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-03</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Linguistic Illegibility (Mickens)</h3>
+    <p class="teaser">CoT probes can diverge from real computation.</p>
+  </div>
+  <div class="details">
+    <p>CoT probes can diverge from real computation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Interpretability / CoT reliability research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02852" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>HookPry</h3>
+    <p class="teaser">Plugin lifecycle hooks as supply-chain outside LLM path.</p>
+  </div>
+  <div class="details">
+    <p>Plugin lifecycle hooks as supply-chain outside LLM path.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Plugin/hook supply-chain attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03884" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PatchBench</h3>
+    <p class="teaser">PoC-only scoring inflates patching agents ~1.83×.</p>
+  </div>
+  <div class="details">
+    <p>PoC-only scoring inflates patching agents ~1.83×.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Eval methodology paper for patching agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04075" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Sentinel-RL</h3>
+    <p class="teaser">Hard human gate for SOC containment.</p>
+  </div>
+  <div class="details">
+    <p>Hard human gate for SOC containment.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>HITL gate research; similar gates exist in industry under other names.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04159" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AlcaTRAz</h3>
+    <p class="teaser">Prompt-level jailbreak defense; still a high-severity tail.</p>
+  </div>
+  <div class="details">
+    <p>Prompt-level jailbreak defense; still a high-severity tail.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Jailbreak defense evaluation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03693" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI Daybreak for Frontline Defenders</h3>
+    <p class="teaser">$1B subsidized cyber access for critical infra.</p>
+  </div>
+  <div class="details">
+    <p>$1B subsidized cyber access for critical infra.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Real OpenAI program for critical-infrastructure defenders.</p>
+    <p class="linkrow"><a href="https://openai.com/index/daybreak-for-frontline-defenders/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-04</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI — GPT-6 Astra safety</h3>
+    <p class="teaser">Critical cyber model; CoT monitorability drops under pressure.</p>
+  </div>
+  <div class="details">
+    <p>Critical cyber model; CoT monitorability drops under pressure.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI product safety overview for a named model class.</p>
+    <p class="linkrow"><a href="https://openai.com/index/safety-overview-gpt-6-astra/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Trust Me, I&#x27;m Your Developer</h3>
+    <p class="teaser">Model invents identity quiz then self-verifies.</p>
+  </div>
+  <div class="details">
+    <p>Model invents identity quiz then self-verifies.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Social-engineering / self-verification failure research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03247" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>UMPeek</h3>
+    <p class="teaser">Infer hidden user prefs from personalized agents.</p>
+  </div>
+  <div class="details">
+    <p>Infer hidden user prefs from personalized agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Privacy leakage attack on personalized agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03815" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Black Box for Agentic Processes</h3>
+    <p class="teaser">Blockchain-anchored agent audit evidence.</p>
+  </div>
+  <div class="details">
+    <p>Blockchain-anchored agent audit evidence.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed audit-logging architecture.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04017" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-05</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>FGLGuard</h3>
+    <p class="teaser">Federated graph guard for multi-agent systems.</p>
+  </div>
+  <div class="details">
+    <p>Federated graph guard for multi-agent systems.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed multi-agent guard.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02967" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Rent-a-RAG / DirBucket</h3>
+    <p class="teaser">Embedding watermarks to audit third-party RAG.</p>
+  </div>
+  <div class="details">
+    <p>Embedding watermarks to audit third-party RAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG audit / watermark research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.03749" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>GEO Defender</h3>
+    <p class="teaser">Stops docs gaming generative-search citations.</p>
+  </div>
+  <div class="details">
+    <p>Stops docs gaming generative-search citations.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Generative-engine optimization defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02964" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PROSE</h3>
+    <p class="teaser">Semantic LLM provenance fingerprints.</p>
+  </div>
+  <div class="details">
+    <p>Semantic LLM provenance fingerprints.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Model provenance fingerprint research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02553" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-06</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PrimSynth</h3>
+    <p class="teaser">Multi-agent Linux kernel exploit-primitive synthesis.</p>
+  </div>
+  <div class="details">
+    <p>Multi-agent Linux kernel exploit-primitive synthesis.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Offensive multi-agent research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.02647" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CONTINUITY</h3>
+    <p class="teaser">Security-context contracts across component boundaries.</p>
+  </div>
+  <div class="details">
+    <p>Security-context contracts across component boundaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Proposed security-context contracts.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.05269" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Rethinking IPI as test-time search</h3>
+    <p class="teaser">More attacker compute finds more injection wins.</p>
+  </div>
+  <div class="details">
+    <p>More attacker compute finds more injection wins.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>IPI evaluation / attacker-compute research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04495" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Repeat-After-Me</h3>
+    <p class="teaser">Black-box adaptive visual prompt injection.</p>
+  </div>
+  <div class="details">
+    <p>Black-box adaptive visual prompt injection.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Visual prompt-injection attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04533" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Execution-state unlearning</h3>
+    <p class="teaser">Delete memory ≠ clear KV/plans/summaries.</p>
+  </div>
+  <div class="details">
+    <p>Delete memory ≠ clear KV/plans/summaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>State-wipe / unlearning research for agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.04875" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-07</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>TIER</h3>
+    <p class="teaser">Safety beyond binary ASR by threat implicitness.</p>
+  </div>
+  <div class="details">
+    <p>Safety beyond binary ASR by threat implicitness.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety evaluation methodology.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.05117" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Meta Muse security architecture</h3>
+    <p class="teaser">Assume PI; Sentinel; credential surrogation; bounty.</p>
+  </div>
+  <div class="details">
+    <p>Assume PI; Sentinel; credential surrogation; bounty.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Meta’s published security architecture for Muse — describes controls they say they run.</p>
+    <p class="linkrow"><a href="https://research.meta.ai/blog/security-and-safety-for-ai-agents-our-approach-with-muse" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Authority Is Not a String</h3>
+    <p class="teaser">Capabilities as real authority, not prompt text.</p>
+  </div>
+  <div class="details">
+    <p>Capabilities as real authority, not prompt text.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Capability / authority model research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08371" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MemSentry</h3>
+    <p class="teaser">Detect persistent memory poisoning.</p>
+  </div>
+  <div class="details">
+    <p>Detect persistent memory poisoning.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Memory-poisoning detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08747" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Revoked but Still Authoritative</h3>
+    <p class="teaser">Revoked grants still act as authority in agent memory.</p>
+  </div>
+  <div class="details">
+    <p>Revoked grants still act as authority in agent memory.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Residual-authority research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08258" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ResidualAuth</h3>
+    <p class="teaser">Auth state under revocable delegation.</p>
+  </div>
+  <div class="details">
+    <p>Auth state under revocable delegation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Delegation / auth-state research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08062" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Structural Jailbreaks / IICL</h3>
+    <p class="teaser">Cross-provider jailbreaks generalize but don’t compound.</p>
+  </div>
+  <div class="details">
+    <p>Cross-provider jailbreaks generalize but don’t compound.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Jailbreak generalization study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.08373" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-09</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>PrivEscalate</h3>
+    <p class="teaser">531 Docker Linux priv-esc scenarios for LLM agents.</p>
+  </div>
+  <div class="details">
+    <p>531 Docker Linux priv-esc scenarios for LLM agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Agent privilege-escalation benchmark.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09087" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic — Alignment assessment of cyber-eval incidents</h3>
+    <p class="teaser">Biased reasoning + recklessness; Mythos 5 PyPI malware.</p>
+  </div>
+  <div class="details">
+    <p>Biased reasoning + recklessness; Mythos 5 PyPI malware.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic alignment assessment of their own cyber-eval incidents.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/alignment-assessment-cybersecurity-incidents" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AgentHijack</h3>
+    <p class="teaser">Visual patches on computer-use agents.</p>
+  </div>
+  <div class="details">
+    <p>Visual patches on computer-use agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Computer-use visual attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09212" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>In RAG We Trust?</h3>
+    <p class="teaser">How little poisoned retrieval text flips grounded models.</p>
+  </div>
+  <div class="details">
+    <p>How little poisoned retrieval text flips grounded models.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning sensitivity study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09243" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Multimodal PI on agentic frameworks</h3>
+    <p class="teaser">Image-borne injections to files/mail/tools.</p>
+  </div>
+  <div class="details">
+    <p>Image-borne injections to files/mail/tools.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multimodal injection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09404" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>DuplexJail</h3>
+    <p class="teaser">Spoken interruptions break full-duplex speech safety.</p>
+  </div>
+  <div class="details">
+    <p>Spoken interruptions break full-duplex speech safety.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Speech-agent jailbreak research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09420" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Fragile safety at frontier scale</h3>
+    <p class="teaser">Single refusal-direction ablation on 320B MoE.</p>
+  </div>
+  <div class="details">
+    <p>Single refusal-direction ablation on 320B MoE.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Safety fragility study at large scale.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09793" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CS-Guard</h3>
+    <p class="teaser">Guardrail bench for code-gen security.</p>
+  </div>
+  <div class="details">
+    <p>Guardrail bench for code-gen security.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Code-gen guardrail benchmark.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.09798" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-10</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>TrajMark</h3>
+    <p class="teaser">Watermark coding-agent trajectories.</p>
+  </div>
+  <div class="details">
+    <p>Watermark coding-agent trajectories.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Trajectory watermarking research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10416" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Threat Intelligence Sep 2026</h3>
+    <p class="teaser">Agentic kill-chain misuse, API-key theft, influence ops.</p>
+  </div>
+  <div class="details">
+    <p>Agentic kill-chain misuse, API-key theft, influence ops.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic’s threat-intel report on real-world misuse patterns.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/threat-intelligence-report-september-2026" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Frontier Red Team — targeting + GNC</h3>
+    <p class="teaser">Photo geolocation / simulated drone guidance evals.</p>
+  </div>
+  <div class="details">
+    <p>Photo geolocation / simulated drone guidance evals.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic red-team capability evals (lab research, not a customer product).</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/research/intelligence-targeting-conventional-weapons-capabilities" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>DriftNet</h3>
+    <p class="teaser">Localize IPI in agent tool-call logs.</p>
+  </div>
+  <div class="details">
+    <p>Localize IPI in agent tool-call logs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Detection research for IPI in tool logs.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10892" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>A2ABreak</h3>
+    <p class="teaser">Agent2Agent protocol auth/discovery/delegation.</p>
+  </div>
+  <div class="details">
+    <p>Agent2Agent protocol auth/discovery/delegation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>A2A protocol security analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10871" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SpecGuard</h3>
+    <p class="teaser">Inference-time backdoor detection for third-party LLMs.</p>
+  </div>
+  <div class="details">
+    <p>Inference-time backdoor detection for third-party LLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Backdoor detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11799" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>In-context multimodal jailbreaks</h3>
+    <p class="teaser">Why harmful ICL demos jailbreak MLLMs.</p>
+  </div>
+  <div class="details">
+    <p>Why harmful ICL demos jailbreak MLLMs.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multimodal ICL jailbreak research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10613" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Black-box MI via word-level probs</h3>
+    <p class="teaser">Membership inference without token logits.</p>
+  </div>
+  <div class="details">
+    <p>Membership inference without token logits.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Membership-inference method research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10611" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-11</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Jailbreaking evaluators</h3>
+    <p class="teaser">Automated ASR judges disagree.</p>
+  </div>
+  <div class="details">
+    <p>Automated ASR judges disagree.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Eval-judge reliability research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10594" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>The Missing Boundary</h3>
+    <p class="teaser">Degraded control → 55–62% loss-of-control; restore → 0%.</p>
+  </div>
+  <div class="details">
+    <p>Degraded control → 55–62% loss-of-control; restore → 0%.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Control / loss-of-control empirical study.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11024" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>From Intent to Execution Grant</h3>
+    <p class="teaser">Bind high-risk actions at the execution sink.</p>
+  </div>
+  <div class="details">
+    <p>Bind high-risk actions at the execution sink.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Execution-binding proposal; mirrors industry least-privilege patterns.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11596" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Whisper Attacks on AP2</h3>
+    <p class="teaser">Signed transaction, unsigned decision steered by product text.</p>
+  </div>
+  <div class="details">
+    <p>Signed transaction, unsigned decision steered by product text.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Payment-protocol / agent commerce attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11757" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ToxicRAG</h3>
+    <p class="teaser">One poisoned knowledge-update doc flips RAG answers.</p>
+  </div>
+  <div class="details">
+    <p>One poisoned knowledge-update doc flips RAG answers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG poisoning attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.11082" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-12</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>No-Box MCP IPI</h3>
+    <p class="teaser">Description-only detection of IPI in MCP servers.</p>
+  </div>
+  <div class="details">
+    <p>Description-only detection of IPI in MCP servers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP IPI detection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.10854" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Misleading the Planner</h3>
+    <p class="teaser">Poisoned worker descriptions steer the planner.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned worker descriptions steer the planner.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Multi-agent planner injection research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.15516" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ActGuard</h3>
+    <p class="teaser">Pre-execution IPI audit of tool calls.</p>
+  </div>
+  <div class="details">
+    <p>Pre-execution IPI audit of tool calls.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Pre-execution audit proposal.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14987" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>The Stochastic Deputy</h3>
+    <p class="teaser">Tenant IDs in MCP/tool args as confused-deputy.</p>
+  </div>
+  <div class="details">
+    <p>Tenant IDs in MCP/tool args as confused-deputy.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Tenant isolation / confused-deputy research for tools/MCP.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14780" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CIG-MIA</h3>
+    <p class="teaser">Strong RAG membership inference.</p>
+  </div>
+  <div class="details">
+    <p>Strong RAG membership inference.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG membership-inference attack.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14649" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>SkillSecurer</h3>
+    <p class="teaser">PI scan/patch for agent skill packages.</p>
+  </div>
+  <div class="details">
+    <p>PI scan/patch for agent skill packages.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Skill-package scanning proposal.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14079" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Persistent Memory Poisoning (PMPA)</h3>
+    <p class="teaser">Malicious harness memory across sessions.</p>
+  </div>
+  <div class="details">
+    <p>Malicious harness memory across sessions.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Memory-poisoning attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.13889" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-15</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>ViTeGate</h3>
+    <p class="teaser">Poisoned image–text pairs in VLRAG.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned image–text pairs in VLRAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Vision-language RAG poisoning research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.14685" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Universal Defenses for tool agents</h3>
+    <p class="teaser">Tool filtering + original-toolset recall vs DPI/IPI/memory/backdoors.</p>
+  </div>
+  <div class="details">
+    <p>Tool filtering + original-toolset recall vs DPI/IPI/memory/backdoors.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Defense bundle evaluated in research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16098" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Permutation stegomalware in LLM weights</h3>
+    <p class="teaser">Malware via permutation symmetry in weights.</p>
+  </div>
+  <div class="details">
+    <p>Malware via permutation symmetry in weights.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Weight-stego malware research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16193" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MarkSec</h3>
+    <p class="teaser">Watermark steal/scrub/spoof evaluation.</p>
+  </div>
+  <div class="details">
+    <p>Watermark steal/scrub/spoof evaluation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Watermark robustness evaluation.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16681" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Secure AI pentest agents</h3>
+    <p class="teaser">Threat model + guardrails for offensive agents.</p>
+  </div>
+  <div class="details">
+    <p>Threat model + guardrails for offensive agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Pentest-agent threat model research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16694" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>UI desynchronization in mobile agents</h3>
+    <p class="teaser">User and agent can see different UI.</p>
+  </div>
+  <div class="details">
+    <p>User and agent can see different UI.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Mobile agent UI-desync attack research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16732" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>InceptionRAG</h3>
+    <p class="teaser">Multi-doc stealthy RAG poisoning.</p>
+  </div>
+  <div class="details">
+    <p>Multi-doc stealthy RAG poisoning.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Stealthy multi-doc RAG poisoning.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16818" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-16</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>RAG-CT</h3>
+    <p class="teaser">Blunt retrieval-based PII extraction from RAG.</p>
+  </div>
+  <div class="details">
+    <p>Blunt retrieval-based PII extraction from RAG.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>RAG PII-extraction / defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.16095" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>OpenAI Misalignment Reports hub</h3>
+    <p class="teaser">Six cases: Artifactory messaging, self-generated PI, leaked keys…</p>
+  </div>
+  <div class="details">
+    <p>Six cases: Artifactory messaging, self-generated PI, leaked keys…</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>OpenAI publishes real misalignment case reports from their systems.</p>
+    <p class="linkrow"><a href="https://alignment.openai.com/misalignment-reports/" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="lab">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-lab">Lab / Incident</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Anthropic Claude Fable / Mythos 5.1</h3>
+    <p class="teaser">Strongest claimed agentic PI robustness; anti-distillation.</p>
+  </div>
+  <div class="details">
+    <p>Strongest claimed agentic PI robustness; anti-distillation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Anthropic product claims for named model releases and safeguards.</p>
+    <p class="linkrow"><a href="https://www.anthropic.com/claude-fable-and-mythos-5-1" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>AgentLSD</h3>
+    <p class="teaser">Security agents under adversarial task contamination.</p>
+  </div>
+  <div class="details">
+    <p>Security agents under adversarial task contamination.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Security-agent contamination research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19140" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Implicit trust in tool-calling / MCP</h3>
+    <p class="teaser">One shared context; no privilege separation.</p>
+  </div>
+  <div class="details">
+    <p>One shared context; no privilege separation.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP / tool-calling trust analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18217" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Trusting Trust revisited</h3>
+    <p class="teaser">Poisoned benchmarks contaminate coding agents.</p>
+  </div>
+  <div class="details">
+    <p>Poisoned benchmarks contaminate coding agents.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Benchmark poisoning for coding agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.17817" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Remote MCP observability</h3>
+    <p class="teaser">Streamable-HTTP MCP as enterprise attack surface.</p>
+  </div>
+  <div class="details">
+    <p>Streamable-HTTP MCP as enterprise attack surface.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Enterprise MCP attack-surface analysis.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19100" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>MCP NIDS evasion</h3>
+    <p class="teaser">JSON-RPC can look like beacons to NIDS.</p>
+  </div>
+  <div class="details">
+    <p>JSON-RPC can look like beacons to NIDS.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>MCP / NIDS interaction research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.19091" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Illusion of Local Privacy</h3>
+    <p class="teaser">Local LLM serving still leaks prompts at software boundaries.</p>
+  </div>
+  <div class="details">
+    <p>Local LLM serving still leaks prompts at software boundaries.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Local-serving privacy leakage research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18526" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>CaMeLoT</h3>
+    <p class="teaser">Temporal-logic checks on multi-step tool-agent plans.</p>
+  </div>
+  <div class="details">
+    <p>Temporal-logic checks on multi-step tool-agent plans.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>Plan-checking defense research.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18674" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article>
+<article class="card expandable" tabindex="0" role="button" aria-expanded="false" data-kind="paper">
+  <div class="summary">
+    <div class="row">
+      <div class="badges"><div class="meta"><span class="date">2026-09-17</span><span class="src">Master</span></div><span class="kind kind-paper">Paper only</span></div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </div>
+    <h3>Verifiable Action Card</h3>
+    <p class="teaser">Unspoofable HITL for agentic browsers.</p>
+  </div>
+  <div class="details">
+    <p>Unspoofable HITL for agentic browsers.</p>
+    <p class="genuine"><strong>Genuineness</strong><br/>HITL verification proposal for browser agents.</p>
+    <p class="linkrow"><a href="https://arxiv.org/abs/2609.18411" target="_blank" rel="noopener">Open primary source ↗</a></p>
+  </div>
+</article></div>
+</div>
+    </section>
+  </main>
+  <footer>Aitr owns Days · Master owns digests · Lab/Incident = company primary sources · Industry practice = common shipped controls · Paper only = research, not a product claim</footer>
+<script>
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  panels.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.tab).classList.add('active');
+  filter();
+}));
+const q = document.getElementById('q');
+let kindFilter = 'all';
+function filter() {
+  const term = q.value.trim().toLowerCase();
+  const active = document.querySelector('.panel.active');
+  active.querySelectorAll('.card').forEach(card => {
+    const textOk = !term || card.innerText.toLowerCase().includes(term);
+    const kind = card.dataset.kind || '';
+    const kindOk = kindFilter === 'all' || kind === kindFilter || (active.id !== 'genuine');
+    // kind chips only apply on Genuineness tab
+    const useKind = active.id === 'genuine';
+    const show = textOk && (!useKind || kindFilter === 'all' || kind === kindFilter);
+    card.classList.toggle('hidden', !show);
+  });
+}
+q.addEventListener('input', filter);
+document.querySelectorAll('#kind-filters .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#kind-filters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    kindFilter = chip.dataset.kind;
+    filter();
+  });
+});
+
+function toggleCard(card) {
+  const open = card.classList.toggle('open');
+  card.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+document.querySelectorAll('.card.expandable').forEach(card => {
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;
+    toggleCard(card);
+  });
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(card); }
+  });
+});
+</script>
+</body>
+</html>
