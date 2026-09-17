@@ -19,4 +19,8 @@ theme = "hugo-ficurinia"
     name = "Blog"
     url = "/posts/"
     weight = 2
-
+  [[menu.main]]
+    identifier = "ai-security"
+    name = "AI Security"
+    url = "/ai-security/"
+    weight = 3
